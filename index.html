@@ -1,0 +1,631 @@
+<title>On Island Sales Outreach</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+
+<canvas id="cc" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:999"></canvas>
+
+<style>
+/* ── Dark coastal command center ── */
+:root {
+  --bg:      #07101E;
+  --panel:   #0D1B30;
+  --card:    #132038;
+  --border:  #1C3356;
+  --border2: #284876;
+  --fg:      #D6E8F8;
+  --fg2:     #6E90B4;
+  --fg3:     #38587A;
+  --gold:    #F2C719;
+  --gold-lo: rgba(242,199,25,.09);
+  --teal:    #42B8B4;
+  --teal-lo: rgba(66,184,180,.1);
+  --red:     #F06060;
+  --green:   #4ED68A;
+  --hd:      'Space Grotesk', system-ui, sans-serif;
+  --bd:      'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body {
+  background:var(--bg);color:var(--fg);
+  font-family:var(--bd);font-size:15px;line-height:1.55;
+  margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0 0 auto;
+  height:env(safe-area-inset-top,0px);
+  background:rgba(7,16,30,.95);z-index:101;
+}
+
+/* ─── Header ───── */
+.hdr{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:100;
+  background:rgba(7,16,30,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:.7rem max(16px,env(safe-area-inset-left,0px));
+  margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.hdr-brand{display:flex;flex-direction:column;gap:0}
+.hdr-name{font-family:var(--hd);font-size:15px;font-weight:700;color:var(--fg);line-height:1.2}
+.hdr-maker{font-size:10.5px;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase}
+.hdr-date{font-family:var(--hd);font-size:12px;font-weight:600;color:var(--fg3);
+  letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+
+/* ─── Main wrap ── */
+.wrap{max-width:640px;margin:0 auto;padding-block:1.4rem;
+  display:flex;flex-direction:column;gap:1.2rem}
+
+/* ─── Stats ─────── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:.9rem .85rem;display:flex;flex-direction:column;gap:.2rem}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--fg3)}
+.stat-val{font-family:var(--hd);font-size:1.9rem;font-weight:800;line-height:1;
+  font-variant-numeric:tabular-nums}
+.stat-val.g{color:var(--gold)}
+.stat-val.t{color:var(--teal)}
+.stat-sub{font-size:11px;color:var(--fg3);font-variant-numeric:tabular-nums}
+
+/* ─── XP bar ─────── */
+.xp-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
+.xp-top{display:flex;align-items:center;justify-content:space-between}
+.xp-left{display:flex;align-items:center;gap:.5rem}
+.lvl-badge{font-family:var(--hd);font-size:11px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--gold);
+  background:var(--gold-lo);border:1px solid rgba(242,199,25,.2);
+  border-radius:20px;padding:.2rem .7rem}
+.xp-name{font-family:var(--hd);font-size:14px;font-weight:600;color:var(--fg)}
+.xp-num{font-family:var(--hd);font-size:12px;font-weight:600;color:var(--fg2);
+  font-variant-numeric:tabular-nums}
+.xp-track{background:var(--border);border-radius:99px;height:7px;overflow:hidden}
+.xp-fill{background:linear-gradient(90deg,var(--teal),var(--gold));
+  height:100%;border-radius:99px;min-width:4px;
+  transition:width .7s cubic-bezier(.34,1.56,.64,1)}
+
+/* ─── Today card ── */
+.today-card{background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden}
+.today-top{display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 1.1rem;border-bottom:1px solid var(--border)}
+.today-lbl{font-size:10.5px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--fg3)}
+.today-badge{font-family:var(--hd);font-size:12px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:.2rem .75rem}
+.today-badge.done{color:var(--green);background:rgba(78,214,138,.1);
+  border:1px solid rgba(78,214,138,.2)}
+.today-badge.pend{color:var(--gold);background:var(--gold-lo);
+  border:1px solid rgba(242,199,25,.2);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.55}}
+.today-body{padding:1rem 1.1rem;font-size:13.5px;color:var(--fg2)}
+.today-body strong{color:var(--fg)}
+
+/* ─── Log button ── */
+.log-btn{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:.9rem 1rem;
+  background:var(--gold);color:#070F1C;
+  font-family:var(--hd);font-size:14px;font-weight:700;letter-spacing:.02em;
+  border:none;border-radius:10px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s,background .12s;
+}
+.log-btn:hover{background:#FFD42E;transform:translateY(-1px);
+  box-shadow:0 4px 24px rgba(242,199,25,.35)}
+.log-btn:active{transform:translateY(0);box-shadow:none}
+
+/* ─── Form card ─── */
+.form-card{background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:1.25rem 1.1rem;
+  display:flex;flex-direction:column;gap:1rem}
+.form-row{display:flex;flex-direction:column;gap:.4rem}
+.form-lbl{font-size:11.5px;font-weight:600;color:var(--fg2);letter-spacing:.03em}
+.f-input,.f-textarea{
+  background:var(--bg);border:1px solid var(--border2);color:var(--fg);
+  font-family:var(--bd);font-size:14px;border-radius:8px;
+  padding:.6rem .85rem;width:100%;outline:none;
+  transition:border-color .15s;
+}
+.f-input:focus,.f-textarea:focus{border-color:var(--teal)}
+.f-textarea{resize:vertical;min-height:60px}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-btn{
+  background:var(--bg);border:1px solid var(--border2);color:var(--fg2);
+  font-family:var(--hd);font-size:13px;font-weight:600;border-radius:8px;
+  padding:.6rem .8rem;cursor:pointer;transition:all .15s;text-align:left;
+}
+.type-btn.on{border-color:var(--teal);background:var(--teal-lo);color:var(--teal)}
+.type-btn.sale-on{border-color:var(--gold);background:var(--gold-lo);color:var(--gold)}
+.prod-list{display:flex;flex-direction:column;gap:6px}
+.prod-btn{
+  background:var(--bg);border:1px solid var(--border2);
+  color:var(--fg2);font-family:var(--bd);font-size:13.5px;border-radius:8px;
+  padding:.65rem .9rem;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.prod-btn.on{border-color:var(--gold);background:var(--gold-lo);color:var(--fg)}
+.prod-comm{font-family:var(--hd);font-size:13px;font-weight:700;color:var(--gold)}
+.form-actions{display:flex;gap:8px}
+.btn-sub{
+  flex:1;background:var(--teal);color:#051018;
+  font-family:var(--hd);font-size:14px;font-weight:700;
+  border:none;border-radius:8px;padding:.75rem 1rem;cursor:pointer;
+  transition:background .15s,transform .1s;
+}
+.btn-sub:hover{background:#5ECDC9}
+.btn-sub:active{transform:scale(.98)}
+.btn-cnx{
+  background:none;border:1px solid var(--border2);color:var(--fg2);
+  font-family:var(--hd);font-size:13px;font-weight:600;
+  border-radius:8px;padding:.75rem .9rem;cursor:pointer;transition:border-color .15s;
+}
+
+/* ─── Feed ──────── */
+.sec-head{font-size:10.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--fg3);margin-bottom:.6rem}
+.feed-wrap{background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden}
+.feed-empty{padding:2rem 1.5rem;text-align:center;color:var(--fg3);font-size:13.5px}
+.feed-row{display:flex;align-items:flex-start;gap:.9rem;
+  padding:.8rem 1.1rem;border-bottom:1px solid var(--border)}
+.feed-row:last-child{border-bottom:none}
+.feed-ico{width:32px;height:32px;border-radius:8px;flex-shrink:0;margin-top:.1rem;
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+.ico-email{background:rgba(66,184,180,.14)}
+.ico-call{background:rgba(130,170,220,.12)}
+.ico-meeting{background:rgba(80,160,255,.12)}
+.ico-sale{background:var(--gold-lo)}
+.feed-info{min-width:0;flex:1}
+.feed-co{font-family:var(--hd);font-size:13px;font-weight:600;color:var(--fg);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-note{font-size:12px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-r{text-align:right;flex-shrink:0}
+.feed-xp{font-family:var(--hd);font-size:12px;font-weight:700;color:var(--teal)}
+.feed-comm{font-family:var(--hd);font-size:12px;font-weight:700;color:var(--gold)}
+.feed-dt{font-size:11px;color:var(--fg3)}
+
+/* ─── Achievements ── */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.ach{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:1rem;display:flex;flex-direction:column;align-items:center;
+  gap:.35rem;text-align:center;transition:border-color .2s}
+.ach.on{border-color:rgba(242,199,25,.35);background:var(--gold-lo)}
+.ach-ico{font-size:1.75rem;line-height:1;
+  transition:filter .3s;filter:grayscale(1) opacity(.25)}
+.ach.on .ach-ico{filter:none}
+.ach-nm{font-family:var(--hd);font-size:11.5px;font-weight:700;color:var(--fg3);line-height:1.2}
+.ach.on .ach-nm{color:var(--fg)}
+.ach-cd{font-size:10.5px;color:var(--fg3);line-height:1.3}
+
+/* ─── Toast ─────── */
+.toast{
+  position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 1.25rem);
+  left:50%;transform:translateX(-50%) translateY(120px);
+  background:var(--card);border:1px solid rgba(242,199,25,.35);border-radius:12px;
+  padding:.8rem 1.25rem;display:flex;align-items:center;gap:.75rem;
+  font-family:var(--hd);font-size:13.5px;font-weight:600;color:var(--fg);
+  z-index:997;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s;
+  box-shadow:0 8px 32px rgba(0,0,0,.55);white-space:nowrap;opacity:0;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast-ico{font-size:1.4rem}
+
+/* ─── Footer ─────── */
+.foot{padding:1.5rem 0 2rem;text-align:center;font-size:11.5px;color:var(--fg3);
+  border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.2rem}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<!-- ── Header ────────────────────────────────────────── -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-name">On Island — Sales Outreach</div>
+    <div class="hdr-maker">Caicos Media · Grace Bay, TCI</div>
+  </div>
+  <div class="hdr-date" id="hdr-date"></div>
+</header>
+
+<div class="wrap">
+
+  <!-- Stats row -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">🔥 Streak</div>
+      <div class="stat-val g" id="st-streak">0</div>
+      <div class="stat-sub">days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">💰 Earned</div>
+      <div class="stat-val g" id="st-comm">$0</div>
+      <div class="stat-sub">commission</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">📬 Today</div>
+      <div class="stat-val t" id="st-today">0</div>
+      <div class="stat-sub" id="st-today-lbl">emails sent</div>
+    </div>
+  </div>
+
+  <!-- XP bar -->
+  <div class="xp-card">
+    <div class="xp-top">
+      <div class="xp-left">
+        <span class="lvl-badge" id="xp-lvl">LVL 1</span>
+        <span class="xp-name" id="xp-name">Scout</span>
+      </div>
+      <span class="xp-num" id="xp-num">0 / 100 XP</span>
+    </div>
+    <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Today's challenge -->
+  <div class="today-card">
+    <div class="today-top">
+      <div class="today-lbl">Today's challenge</div>
+      <div class="today-badge pend" id="chal-badge">Pending</div>
+    </div>
+    <div class="today-body" id="chal-body">
+      Send <strong>at least 1 email</strong> today to keep your streak going.
+      One message is enough — just start.
+    </div>
+  </div>
+
+  <!-- Log button -->
+  <button class="log-btn" id="log-btn" onclick="toggleForm()">+ Log an Activity</button>
+
+  <!-- Form (hidden) -->
+  <div class="form-card" id="form-card" hidden>
+
+    <div class="form-row">
+      <div class="form-lbl">What did you do?</div>
+      <div class="type-grid">
+        <button class="type-btn on" id="tb-email" onclick="setType('email')">📧 Email</button>
+        <button class="type-btn" id="tb-call" onclick="setType('call')">📞 Call</button>
+        <button class="type-btn" id="tb-meeting" onclick="setType('meeting')">🤝 Meeting</button>
+        <button class="type-btn" id="tb-sale" onclick="setType('sale')">💰 Sale Closed!</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-lbl" for="f-co">Company or person</label>
+      <input class="f-input" id="f-co" type="text" placeholder="e.g. Caicos Club HOA" autocomplete="off">
+    </div>
+
+    <div class="form-row" id="prod-row" hidden>
+      <div class="form-lbl">What did they sign up for?</div>
+      <div class="prod-list" id="prod-list">
+        <button class="prod-btn" id="p-week"     onclick="setProd('week')"><span>Week Pass</span><span class="prod-comm">+$45</span></button>
+        <button class="prod-btn" id="p-pt1"      onclick="setProd('pt1')"><span>Part-Time — 1 month</span><span class="prod-comm">+$75</span></button>
+        <button class="prod-btn" id="p-pt2"      onclick="setProd('pt2')"><span>Part-Time — 2 months</span><span class="prod-comm">+$150</span></button>
+        <button class="prod-btn" id="p-pt3"      onclick="setProd('pt3')"><span>Part-Time — 3 months</span><span class="prod-comm">+$225</span></button>
+        <button class="prod-btn" id="p-ft1"      onclick="setProd('ft1')"><span>Full-Time — 1 month</span><span class="prod-comm">+$120</span></button>
+        <button class="prod-btn" id="p-ft2"      onclick="setProd('ft2')"><span>Full-Time — 2 months</span><span class="prod-comm">+$240</span></button>
+        <button class="prod-btn" id="p-ft3"      onclick="setProd('ft3')"><span>Full-Time — 3 months</span><span class="prod-comm">+$360</span></button>
+        <button class="prod-btn" id="p-flagship" onclick="setProd('flagship')"><span>Flagship Event</span><span class="prod-comm">+$150</span></button>
+        <button class="prod-btn" id="p-fullday"  onclick="setProd('fullday')"><span>Full Day Event Hire</span><span class="prod-comm">+$600</span></button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-lbl" for="f-note">Quick note <span style="color:var(--fg3)">(optional)</span></label>
+      <textarea class="f-textarea" id="f-note" placeholder="What happened? What's the follow-up?"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-sub" onclick="submitLog()">Log it</button>
+      <button class="btn-cnx" onclick="toggleForm()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Activity feed -->
+  <div>
+    <div class="sec-head">Recent activity</div>
+    <div class="feed-wrap" id="feed"></div>
+  </div>
+
+  <!-- Achievements -->
+  <div>
+    <div class="sec-head">Achievements</div>
+    <div class="ach-grid" id="achs"></div>
+  </div>
+
+</div>
+
+<div class="foot">
+  <span>Built by Caicos Media for On Island</span>
+  <span>Grace Bay Road · Providenciales, Turks &amp; Caicos</span>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-ico" id="t-ico">🏆</span>
+  <span id="t-msg">Achievement unlocked!</span>
+</div>
+
+<script>
+const LEVELS = [
+  {min:0,   max:99,   n:1, name:'Scout'},
+  {min:100, max:299,  n:2, name:'Prospector'},
+  {min:300, max:699,  n:3, name:'Closer'},
+  {min:700, max:1499, n:4, name:'Rainmaker'},
+  {min:1500,max:1e9,  n:5, name:'Island Legend'},
+];
+
+const PRODUCTS = {
+  week:    {label:'Week Pass',          c:45},
+  pt1:     {label:'Part-Time (1 mo)',   c:75},
+  pt2:     {label:'Part-Time (2 mo)',   c:150},
+  pt3:     {label:'Part-Time (3 mo)',   c:225},
+  ft1:     {label:'Full-Time (1 mo)',   c:120},
+  ft2:     {label:'Full-Time (2 mo)',   c:240},
+  ft3:     {label:'Full-Time (3 mo)',   c:360},
+  flagship:{label:'Flagship Event',     c:150},
+  fullday: {label:'Full Day Event',     c:600},
+};
+
+const XP_PER = {email:10,call:15,meeting:30,sale:100};
+
+const ACHS = [
+  {id:'first',    ico:'🌊', name:'First Wave',       cond:'Log your first activity',      ok:s=>s.total>=1},
+  {id:'onfire',   ico:'🔥', name:'On Fire',          cond:'3-day streak',                 ok:s=>s.streak>=3},
+  {id:'five_day', ico:'📅', name:'5-Day Run',        cond:'5-day streak',                 ok:s=>s.streak>=5},
+  {id:'week',     ico:'🏆', name:'Week Warrior',     cond:'7-day streak',                 ok:s=>s.streak>=7},
+  {id:'emails25', ico:'📧', name:'Email Machine',    cond:'25 emails sent',               ok:s=>s.emails>=25},
+  {id:'calls10',  ico:'📞', name:'Dialer',           cond:'10 calls made',                ok:s=>s.calls>=10},
+  {id:'mtg5',     ico:'🤝', name:'Meeting Maker',    cond:'5 meetings booked',            ok:s=>s.meetings>=5},
+  {id:'firstsale',ico:'💰', name:'First Commission', cond:'Close your first sale',        ok:s=>s.sales>=1},
+  {id:'five1day', ico:'⚡', name:'5 in a Day',       cond:'5 activities in one day',      ok:s=>s.maxDay>=5},
+  {id:'500club',  ico:'🏖️', name:'$500 Club',        cond:'$500+ total commission',       ok:s=>s.comm>=500},
+  {id:'1kclub',   ico:'💎', name:'$1K Club',         cond:'$1,000+ total commission',     ok:s=>s.comm>=1000},
+  {id:'legend',   ico:'🌴', name:'Island Legend',    cond:'Reach Level 5',                ok:s=>lvl(s.xp).n>=5},
+];
+
+// ── State ──────────────────────────────────────────
+let S = {activities:[],unlocked:[]};
+
+function load(){try{const r=localStorage.getItem('oi_v2');if(r)S=JSON.parse(r)}catch(e){}}
+function save(){try{localStorage.setItem('oi_v2',JSON.stringify(S))}catch(e){}}
+
+function today(){return new Date().toISOString().slice(0,10)}
+
+function stats(){
+  const a=S.activities, t=today();
+  const xp=a.reduce((s,x)=>s+(x.xp||0),0);
+  const comm=a.reduce((s,x)=>s+(x.comm||0),0);
+  const emails=a.filter(x=>x.type==='email').length;
+  const calls=a.filter(x=>x.type==='call').length;
+  const meetings=a.filter(x=>x.type==='meeting').length;
+  const sales=a.filter(x=>x.type==='sale').length;
+  const todayA=a.filter(x=>x.date===t);
+  const todayEmails=todayA.filter(x=>x.type==='email').length;
+
+  // streak
+  const days=[...new Set(a.map(x=>x.date))].sort();
+  let streak=0;
+  if(days.length){
+    const last=days[days.length-1];
+    const lastMs=new Date(last+'T12:00:00Z').getTime();
+    const todayMs=new Date(t+'T12:00:00Z').getTime();
+    if((todayMs-lastMs)/86400000<=1){
+      streak=1;
+      let ref=lastMs;
+      for(let i=days.length-2;i>=0;i--){
+        const prevMs=new Date(days[i]+'T12:00:00Z').getTime();
+        if(Math.round((ref-prevMs)/86400000)===1){streak++;ref=prevMs}
+        else break;
+      }
+    }
+  }
+  const perDay={};
+  a.forEach(x=>{perDay[x.date]=(perDay[x.date]||0)+1});
+  const maxDay=Math.max(0,...Object.values(perDay));
+
+  return{xp,comm,emails,calls,meetings,sales,total:a.length,streak,maxDay,
+    todayCount:todayA.length,todayEmails};
+}
+
+function lvl(xp){return LEVELS.find(l=>xp>=l.min&&xp<=l.max)||LEVELS[LEVELS.length-1]}
+
+// ── Render ─────────────────────────────────────────
+function render(){
+  const st=stats(),t=today();
+
+  document.getElementById('hdr-date').textContent=
+    new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+
+  document.getElementById('st-streak').textContent=st.streak;
+  const c=st.comm;
+  document.getElementById('st-comm').textContent=
+    c>=1000?'$'+(c/1000).toFixed(1)+'k':'$'+c;
+  document.getElementById('st-today').textContent=st.todayEmails;
+
+  const lv=lvl(st.xp);
+  document.getElementById('xp-lvl').textContent='LVL '+lv.n;
+  document.getElementById('xp-name').textContent=lv.name;
+  const nxt=lv.n<5?lv.max+1:lv.min;
+  const pct=lv.n<5?Math.round((st.xp-lv.min)/(nxt-lv.min)*100):100;
+  document.getElementById('xp-fill').style.width=Math.max(2,Math.min(100,pct))+'%';
+  document.getElementById('xp-num').textContent=st.xp+' / '+(lv.n<5?nxt:'∞')+' XP';
+
+  const done=st.todayEmails>0;
+  const badge=document.getElementById('chal-badge');
+  badge.className='today-badge '+(done?'done':'pend');
+  badge.textContent=done?'✓ Done':'Pending';
+  document.getElementById('chal-body').innerHTML=done
+    ?`<strong>${st.todayEmails} email${st.todayEmails!==1?'s':''}</strong> sent today.
+      Streak: <strong>${st.streak} day${st.streak!==1?'s':''}</strong>.
+      ${st.todayCount>st.todayEmails?'<br>Total activities: '+st.todayCount+'.' : ''}`
+    :`Send <strong>at least 1 email</strong> today to keep your streak alive. One message is enough — just start.`;
+
+  renderFeed();
+  renderAchs(st);
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function renderFeed(){
+  const el=document.getElementById('feed');
+  const a=[...S.activities].reverse().slice(0,15);
+  if(!a.length){
+    el.innerHTML='<div class="feed-empty">No activity yet — log your first one above 👆</div>';
+    return;
+  }
+  const ICONS={email:'📧',call:'📞',meeting:'🤝',sale:'💰'};
+  el.innerHTML=a.map(x=>{
+    const d=new Date(x.date+'T12:00:00Z')
+      .toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return`<div class="feed-row">
+      <div class="feed-ico ico-${x.type}">${ICONS[x.type]||'📌'}</div>
+      <div class="feed-info">
+        <div class="feed-co">${esc(x.company||'—')}</div>
+        <div class="feed-note">${esc(x.note||x.productLabel||x.type)}</div>
+      </div>
+      <div class="feed-r">
+        ${x.comm>0?`<div class="feed-comm">+$${x.comm}</div>`:''}
+        <div class="feed-xp">+${x.xp} XP</div>
+        <div class="feed-dt">${d}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAchs(st){
+  document.getElementById('achs').innerHTML=ACHS.map(a=>{
+    const on=S.unlocked.includes(a.id);
+    return`<div class="ach${on?' on':''}">
+      <div class="ach-ico">${a.ico}</div>
+      <div class="ach-nm">${a.name}</div>
+      <div class="ach-cd">${a.cond}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Form ───────────────────────────────────────────
+let curType='email', curProd=null, formOpen=false;
+
+function toggleForm(){
+  formOpen=!formOpen;
+  document.getElementById('form-card').hidden=!formOpen;
+  document.getElementById('log-btn').textContent=formOpen?'× Close':'+ Log an Activity';
+  if(formOpen){
+    setType('email');
+    document.getElementById('f-co').value='';
+    document.getElementById('f-note').value='';
+    setTimeout(()=>document.getElementById('f-co').focus(),50);
+  }
+}
+
+function setType(t){
+  curType=t; curProd=null;
+  ['email','call','meeting','sale'].forEach(k=>{
+    const btn=document.getElementById('tb-'+k);
+    btn.className='type-btn'+(k===t?(k==='sale'?' sale-on':' on'):'');
+  });
+  document.getElementById('prod-row').hidden=(t!=='sale');
+  if(t!=='sale') document.querySelectorAll('.prod-btn').forEach(b=>b.classList.remove('on'));
+}
+
+function setProd(p){
+  curProd=p;
+  document.querySelectorAll('.prod-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+p).classList.add('on');
+}
+
+function submitLog(){
+  const co=(document.getElementById('f-co').value||'').trim();
+  const note=(document.getElementById('f-note').value||'').trim();
+  if(!co){
+    const el=document.getElementById('f-co');
+    el.style.borderColor='var(--red)';
+    el.focus();
+    setTimeout(()=>el.style.borderColor='',1600);
+    return;
+  }
+  if(curType==='sale'&&!curProd){
+    document.getElementById('prod-row').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  const xp=XP_PER[curType]||10;
+  let comm=0,productLabel='';
+  if(curType==='sale'&&curProd){
+    const p=PRODUCTS[curProd];
+    comm=p.c; productLabel=p.label;
+  }
+  S.activities.push({id:Date.now(),date:today(),type:curType,
+    product:curProd,productLabel,company:co,note,xp,comm});
+  save();
+  checkAchs();
+  render();
+  launchConfetti(curType==='sale'?220:65);
+  toggleForm();
+}
+
+// ── Achievements ────────────────────────────────────
+function checkAchs(){
+  const st=stats(), nw=[];
+  ACHS.forEach(a=>{
+    if(!S.unlocked.includes(a.id)&&a.ok(st)){
+      S.unlocked.push(a.id); nw.push(a);
+    }
+  });
+  save();
+  nw.forEach((a,i)=>setTimeout(()=>showToast(a.ico,'Achievement unlocked: '+a.name),500+i*2200));
+}
+
+// ── Toast ──────────────────────────────────────────
+let toastT;
+function showToast(ico,msg){
+  clearTimeout(toastT);
+  document.getElementById('t-ico').textContent=ico;
+  document.getElementById('t-msg').textContent=msg;
+  const el=document.getElementById('toast');
+  el.classList.add('show');
+  toastT=setTimeout(()=>el.classList.remove('show'),3800);
+}
+
+// ── Confetti ───────────────────────────────────────
+const cv=document.getElementById('cc'),cx=cv.getContext('2d');
+let ptx=[],rafId=null;
+function resizeCv(){cv.width=window.innerWidth;cv.height=window.innerHeight}
+window.addEventListener('resize',resizeCv);resizeCv();
+
+function launchConfetti(n){
+  const cols=['#F2C719','#42B8B4','#4ED68A','#D6E8F8','#F06060','#c084fc','#fb923c'];
+  const ox=window.innerWidth/2, oy=window.innerHeight*0.38;
+  for(let i=0;i<n;i++){
+    const ang=(Math.random()*2-1)*Math.PI;
+    const spd=5+Math.random()*12;
+    ptx.push({x:ox+(Math.random()-.5)*120,y:oy,
+      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-7,
+      col:cols[Math.floor(Math.random()*cols.length)],
+      w:5+Math.random()*9,h:3+Math.random()*5,
+      rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.32,
+      life:1,dec:.011+Math.random()*.009});
+  }
+  if(!rafId) animCv();
+}
+
+function animCv(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  ptx.forEach(p=>{
+    p.vy+=.32;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;
+    p.rot+=p.rv;p.life-=p.dec;
+    if(p.life<=0)return;
+    cx.save();cx.globalAlpha=Math.max(0,p.life);
+    cx.translate(p.x,p.y);cx.rotate(p.rot);
+    cx.fillStyle=p.col;cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    cx.restore();
+  });
+  ptx=ptx.filter(p=>p.life>0);
+  if(ptx.length){rafId=requestAnimationFrame(animCv)}
+  else{rafId=null;cx.clearRect(0,0,cv.width,cv.height)}
+}
+
+// ── Init ──────────────────────────────────────────
+load();render();
+</script>
